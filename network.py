@@ -71,7 +71,7 @@ class Network:
     def __init__(self) -> None:
         self.gamma = data.gamma
         self.memory = deque(maxlen=100_000)
-        self.model = NN(1, data.hiddenSize, 4)
+        self.model = NN(1, data.hiddenSize, 2)
         self.trainer = QTrainer(data.lr, self.gamma, self.model)
         self.decayStep = 0
         self.net = 0
@@ -94,6 +94,8 @@ class Network:
         else:
             state0 = torch.tensor(state, dtype=torch.float)
             pred = self.model(state0)
+            print(pred)
+            exit()
             move = torch.argmax(pred).item()
             final_move[move] = 1
             self.net += 1
