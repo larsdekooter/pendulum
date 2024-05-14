@@ -94,8 +94,6 @@ class Network:
         else:
             state0 = torch.tensor(state, dtype=torch.float)
             pred = self.model(state0)
-            print(pred)
-            exit()
             move = torch.argmax(pred).item()
             final_move[move] = 1
             self.net += 1
