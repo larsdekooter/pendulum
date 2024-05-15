@@ -1,8 +1,9 @@
 import pygame
 import math
-from time import sleep
+from time import sleep, time
 from math import pi
 import numpy as np
+import data
 
 
 class Game:
@@ -13,6 +14,8 @@ class Game:
         self.stickLength = 200
         self.resetBall()
         self.font = pygame.font.Font("roboto1.ttf", 32)
+        self.gameTime = time()
+        self.nGames = 0
         pass
 
     def resetBall(self):
@@ -21,8 +24,7 @@ class Game:
         self.ballPos = (
             math.cos(self.angle) * self.stickLength + 1280 / 2,
             -math.sin(self.angle) * self.stickLength + 720 / 3,
-        )  # ???
-        self.circleCenters = []
+        )  # ??? why minus???
 
     def step(self, move):
         self.events()
@@ -41,6 +43,11 @@ class Game:
         return reward
 
     def calculateBallPosition(self, move):
+        if time() - self.gameTime > data.gameTime:
+            self.resetBall()
+            self.gameTime = time()
+            self.nGames += 1
+            return
         angler = 0.005
         if move[0] == 1:  # Left
             self.angle -= angler
@@ -64,6 +71,7 @@ class Game:
             math.cos(self.angle) * self.stickLength + 1280 / 2,
             -math.sin(self.angle) * self.stickLength + 720 / 3,
         )
+        return
 
     def draw(self):
         pygame.draw.circle(self.screen, "black", (1280 / 2, 720 / 3), 10)
@@ -82,6 +90,19 @@ class Game:
             "white",
         )
         self.screen.blit(text, (80, 80))
+        self.screen.blit(
+            self.font.render(
+                f"{round(time() - self.gameTime, 0)}s/{data.gameTime}s",
+                True,
+                "black",
+                "white",
+            ),
+            (1100, 80),
+        )
+        self.screen.blit(
+            self.font.render(f"Game: {self.nGames}", True, "black", "white"),
+            (1100, 160),
+        )
 
     def events(self):
         for event in pygame.event.get():
