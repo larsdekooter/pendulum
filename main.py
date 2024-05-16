@@ -25,6 +25,8 @@ while True:
     reward = game.step(move)
     nextState = network.getState(game)
     network.trainShort(state, move, reward, nextState, False)
+    if getMove()[2] == 1:
+        network.model.save()
     # if move[2] == 1:
     #     pygame.quit()
     #     exit()
