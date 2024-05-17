@@ -118,4 +118,6 @@ class Network:
             miniSample = self.memory
 
         states, actions, rewards, nextStates = zip(*miniSample)
-        self.trainer.trainStep(states, actions, rewards, nextStates)
+        self.trainer.trainStep(
+            np.array(states), np.array(actions), np.array(rewards), np.array(nextStates)
+        )
