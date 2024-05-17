@@ -2,8 +2,8 @@ from game import Game
 import pygame
 from network import Network
 
-game = Game()
 network = Network()
+game = Game(network)
 
 
 def getMove():
@@ -22,11 +22,13 @@ while True:
     state = network.getState(game)
     move = network.getMove(state)
     # move = getMove()
-    reward = game.step(move)
+    reward, ended = game.step(move)
     nextState = network.getState(game)
-    network.trainShort(state, move, reward, nextState, False)
+    network.trainShort(state, move, reward, nextState)
     if getMove()[2] == 1:
         network.model.save()
+    if ended:
+        network.trainLong()
     # if move[2] == 1:
     #     pygame.quit()
     #     exit()

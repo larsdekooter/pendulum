@@ -38,7 +38,7 @@ class QTrainer:
         self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss()
 
-    def trainStep(self, state, action, reward, nextState, done):
+    def trainStep(self, state, action, reward, nextState):
         state = torch.tensor(state, dtype=torch.float)
         action = torch.tensor(action, dtype=torch.long)
         nextState = torch.tensor(nextState, dtype=torch.float)
@@ -49,22 +49,20 @@ class QTrainer:
             action = torch.unsqueeze(action, 0)
             nextState = torch.unsqueeze(nextState, 0)
             reward = torch.unsqueeze(reward, 0)
-            done = (done,)
 
         pred = self.model(state)
 
         target = pred.clone()
-        for idx in range(len(done)):
+        for idx in range(len(state)):
             qNew = reward[idx]
-            if not done[idx]:
-                qNew = reward[idx] + self.gamma * torch.max(self.model(nextState[idx]))
+            qNew = reward[idx] + self.gamma * torch.max(self.model(nextState[idx]))
 
             target[idx][torch.argmax(action[idx]).item()] = qNew
 
-            self.optimizer.zero_grad()
-            loss = self.criterion(target, pred)
-            loss.backward()
-            self.optimizer.step()
+        self.optimizer.zero_grad()
+        loss = self.criterion(target, pred)
+        loss.backward()
+        self.optimizer.step()
 
 
 class Network:
@@ -101,11 +99,17 @@ class Network:
         self.decayStep += 1
         return final_move
 
-    def trainShort(self, state, action, reward, nextState, done):
-        self.trainer.trainStep(state, action, reward, nextState, done)
+    def trainShort(self, state, action, reward, nextState):
+        self.trainer.trainStep(state, action, reward, nextState)
+        self.remember(
+            state,
+            action,
+            reward,
+            nextState,
+        )
 
-    def remember(self, state, action, reward, nextState, done):
-        self.memory.append((state, action, reward, nextState, done))
+    def remember(self, state, action, reward, nextState):
+        self.memory.append((state, action, reward, nextState))
 
     def trainLong(self):
         if len(self.memory) > data.batchSize:
@@ -113,5 +117,5 @@ class Network:
         else:
             miniSample = self.memory
 
-        states, actions, rewards, nextStates, dones = zip(*miniSample)
-        self.trainer.trainStep(states, actions, rewards, nextStates, dones)
+        states, actions, rewards, nextStates = zip(*miniSample)
+        self.trainer.trainStep(states, actions, rewards, nextStates)

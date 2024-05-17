@@ -5,9 +5,11 @@ from math import pi
 import numpy as np
 import data
 
+# from network import Network
+
 
 class Game:
-    def __init__(self) -> None:
+    def __init__(self, network) -> None:
         pygame.init()
         self.screen = pygame.display.set_mode((1280, 720))
         self.centerPos = (1280 / 2, 720 / 3)
@@ -16,6 +18,8 @@ class Game:
         self.font = pygame.font.Font("roboto1.ttf", 32)
         self.gameTime = time()
         self.nGames = 0
+        self.network = network
+        self.percentage = None
         pass
 
     def resetBall(self):
@@ -29,10 +33,10 @@ class Game:
     def step(self, move):
         self.events()
         self.screen.fill("white")
-        self.calculateBallPosition(move)
+        ended = self.calculateBallPosition(move)
         self.draw()
         self.afterLoad()
-        return self.getReward()
+        return self.getReward(), ended
 
     def getReward(self):
         ideal_angle = np.pi / 2  # The desired angle is pi/2
@@ -47,7 +51,12 @@ class Game:
             self.resetBall()
             self.gameTime = time()
             self.nGames += 1
-            return
+            self.percentage = round(
+                self.network.net / (self.network.net + self.network.rand) * 100.0, 2
+            )
+            self.network.net = 0
+            self.network.rand = 0
+            return True
         angler = 0.005
         if move[0] == 1:  # Left
             self.angle -= angler
@@ -71,7 +80,7 @@ class Game:
             math.cos(self.angle) * self.stickLength + 1280 / 2,
             -math.sin(self.angle) * self.stickLength + 720 / 3,
         )
-        return
+        return False
 
     def draw(self):
         pygame.draw.circle(self.screen, "black", (1280 / 2, 720 / 3), 10)
@@ -102,6 +111,9 @@ class Game:
         self.screen.blit(
             self.font.render(f"Game: {self.nGames}", True, "black", "white"),
             (1100, 160),
+        )
+        self.screen.blit(
+            self.font.render(f"{self.percentage}%", True, "black", "white"), (80, 180)
         )
 
     def events(self):
